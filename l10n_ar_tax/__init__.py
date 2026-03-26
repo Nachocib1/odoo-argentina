@@ -34,3 +34,15 @@ def _l10n_ar_update_taxes(env):
             "Se agregaron los códigos de impuestos correspondientes para retenciones de ganancias aplicadas y retenciones de iva aplicadas y las etiquetas de impuestos para compañías %s."
             % ", ".join(companies.mapped("name"))
         )
+
+    # Asignar grupo "See Payments Menu" a usuarios con acceso de facturación
+    env.cr.execute("""
+        INSERT INTO res_groups_users_rel (gid, uid)
+        SELECT g.id, r.uid
+        FROM res_groups g
+        CROSS JOIN res_groups_users_rel r
+        WHERE g.name::text ILIKE '%%See Payments Menu%%'
+          AND r.gid = (SELECT id FROM res_groups WHERE name::text ILIKE '%%Invoicing%%' LIMIT 1)
+        ON CONFLICT DO NOTHING
+    """)
+    _logger.info("l10n_ar_tax post_init: assigned payments menu group to %d user(s)", env.cr.rowcount)
