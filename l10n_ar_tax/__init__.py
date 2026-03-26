@@ -35,14 +35,16 @@ def _l10n_ar_update_taxes(env):
             % ", ".join(companies.mapped("name"))
         )
 
-    # Asignar grupo "See Payments Menu" a usuarios con acceso de facturación
+    # Asignar grupo "See Payments Menu" a usuarios internos (todos los que
+    # tienen acceso al backend deberían poder ver pagos)
     env.cr.execute("""
         INSERT INTO res_groups_users_rel (gid, uid)
-        SELECT g.id, r.uid
+        SELECT g.id, u.id
         FROM res_groups g
-        CROSS JOIN res_groups_users_rel r
+        CROSS JOIN res_users u
         WHERE g.name::text ILIKE '%%See Payments Menu%%'
-          AND r.gid = (SELECT id FROM res_groups WHERE name::text ILIKE '%%Invoicing%%' LIMIT 1)
+          AND u.active = TRUE
+          AND u.id != 1
         ON CONFLICT DO NOTHING
     """)
     _logger.info("l10n_ar_tax post_init: assigned payments menu group to %d user(s)", env.cr.rowcount)
