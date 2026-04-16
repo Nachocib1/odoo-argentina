@@ -56,6 +56,16 @@ class ResCompany(models.Model):
             error_type = root.find(".//tipoError").text
             error_code = root.find(".//codigoError").text
             error_msg = root.find(".//mensajeError").text.replace("<![CDATA[", "").replace("]]/>", "")
+            # DATO(11) = CUIT no encontrada en padrón ARBA → devolver 0% silenciosamente
+            # Es normal para contribuyentes de otras provincias (Misiones, Córdoba, etc.)
+            if error_code == "11" and error_type == "DATO":
+                _logger.info("ARBA: CUIT not in padrón (DATO 11), returning 0%% aliquots")
+                return {
+                    "AlicuotaPercepcion": "0",
+                    "AlicuotaRetencion": "0",
+                    "GrupoPercepcion": "0",
+                    "GrupoRetencion": "0",
+                }
             raise UserError(_("ARBA Error %s(%s): %s") % (error_type, error_code, error_msg))
         if root.tag == "COMPROBANTE":
             try:
