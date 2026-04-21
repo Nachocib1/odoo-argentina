@@ -90,14 +90,11 @@ class AccountPayment(models.Model):
     #     for rec in (self - latam_checks):
     @api.onchange("withholdings_amount")
     def _onchange_withholdings(self):
-        # solo queremos re-computar en pagos de proveedor
-        for rec in self.filtered(lambda x: x.partner_type == "supplier" and not x._is_latam_check_payment()):
-            # el compute_withholdings o el _compute_withholdings?
+        for rec in self.filtered(lambda x: not x._is_latam_check_payment()):
             amount = rec.amount + rec.payment_difference
             # no pasamos a importes negativos (por ej. si se ponene retenciones grandes) porque es molesto
             # empieza a salir un raise que no deja editar cosas
             rec.amount = amount if amount > 0 else 0
-            # rec.unreconciled_amount = rec.to_pay_amount - rec.selected_debt
 
     @api.onchange("partner_id")
     def _onchange_partner_id(self):
